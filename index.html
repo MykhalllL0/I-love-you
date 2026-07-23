@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>for you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400&display=swap" rel="stylesheet">
@@ -19,18 +19,24 @@
 }
 
 html, body {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
   background: #080808;
   color: var(--text);
   font-family: 'Fira Code', monospace;
   font-weight: 300;
   overflow: hidden;
+  overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 body::after {
   content: '';
-  position: fixed; inset: 0;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   background: repeating-linear-gradient(
     0deg, transparent, transparent 3px,
     rgba(0,0,0,0.045) 3px, rgba(0,0,0,0.045) 4px
@@ -40,7 +46,9 @@ body::after {
 }
 
 #petals {
-  position: fixed; inset: 0;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   pointer-events: none;
   z-index: 50;
   overflow: hidden;
@@ -58,7 +66,9 @@ body::after {
 }
 
 #console {
-  position: fixed; inset: 0;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -118,6 +128,7 @@ body::after {
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 0.5s, transform 0.5s, background 0.3s, border-color 0.3s;
+  touch-action: manipulation;
 }
 #decrypt-btn.show { opacity: 1; transform: translateY(0); }
 #decrypt-btn:active {
@@ -147,12 +158,18 @@ body::after {
   pointer-events: none;
   z-index: 20;
 }
-.corner.tl { top: 18px; left: 18px; }
-.corner.br { bottom: 18px; right: 18px; }
+.corner.tl {
+  top: max(18px, env(safe-area-inset-top) + 10px);
+  left: max(18px, env(safe-area-inset-left) + 10px);
+}
+.corner.br {
+  bottom: max(18px, env(safe-area-inset-bottom) + 10px);
+  right: max(18px, env(safe-area-inset-right) + 10px);
+}
 
 #easter {
   position: fixed;
-  bottom: 22px;
+  bottom: max(22px, env(safe-area-inset-bottom) + 14px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 30;
@@ -177,7 +194,9 @@ body::after {
 }
 
 #heart-view {
-  position: fixed; inset: 0;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -189,23 +208,43 @@ body::after {
 #heart-view.in { opacity: 1; pointer-events: auto; }
 
 #heart-canvas {
-  position: absolute; inset: 0;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   width: 100%; height: 100%;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+@keyframes heartPulseOnce {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+#heart-canvas.pulse-once {
+  animation: heartPulseOnce 1.3s cubic-bezier(.4,0,.2,1) 1;
 }
 
 .heart-symbol {
   position: relative;
   z-index: 5;
+  width: 100%;
+  max-height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding: 48px 20px calc(32px + env(safe-area-inset-bottom));
   text-align: center;
   opacity: 0;
-  transition: opacity 1.2s 2.6s;
-  pointer-events: none;
+  transition: opacity 1.4s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
+  scrollbar-width: none;
 }
-#heart-view.in .heart-symbol { opacity: 1; }
+.heart-symbol::-webkit-scrollbar { display: none; }
+.heart-symbol.show { opacity: 1; }
 
 .symbol-main {
   font-size: 22px;
@@ -219,40 +258,91 @@ body::after {
   50%      { text-shadow: 0 0 36px rgba(255,77,109,0.65); }
 }
 
-.symbol-dots {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+/* ---- decrypting sequence: label + progress readout, shown before the letter ---- */
+.decrypt-progress {
+  min-height: 42px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  margin-top: 2px;
 }
-.sdot {
-  width: 3px; height: 3px;
-  border-radius: 50%;
-  background: rgba(255,77,109,0.35);
-  animation: sdotPulse ease-in-out infinite;
+.decrypt-progress.show { opacity: 1; transform: translateY(0); }
+.decrypt-progress.hide { opacity: 0; transform: translateY(-6px); }
+
+.dp-label {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  color: rgba(255,255,255,0.36);
+  margin-bottom: 9px;
 }
-.sdot:nth-child(1) { animation-duration:2.4s; animation-delay:0s; }
-.sdot:nth-child(2) { animation-duration:2.4s; animation-delay:0.4s; width:5px; height:5px; }
-.sdot:nth-child(3) { animation-duration:2.4s; animation-delay:0.8s; }
-@keyframes sdotPulse {
-  0%,100% { opacity:0.3; transform:scale(1); }
-  50%      { opacity:0.9; transform:scale(1.4); }
+.dp-bar {
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: var(--pink-soft);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+.dp-bar.done { color: var(--green); }
+
+/* ---- confession panel: elegant glass card ---- */
+.confession-panel {
+  position: relative;
+  z-index: 5;
+  margin-top: 4px;
+  padding: 34px 30px 28px;
+  width: min(86vw, 480px);
+  background: rgba(15,15,15,0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  box-shadow:
+    0 0 46px rgba(255,77,109,0.09),
+    0 10px 34px rgba(0,0,0,0.42);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 1s ease, transform 1s ease;
+  pointer-events: none;
+}
+.confession-panel.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+/* fallback for browsers without backdrop-filter (older Firefox iOS) */
+@supports not (backdrop-filter: blur(1px)) {
+  .confession-panel { background: rgba(10,10,10,0.86); }
 }
 
-#re-encrypt {
-  display: block;
-  background: none; border: none;
-  color: rgba(255,255,255,0.14);
-  font-family: 'Fira Code', monospace;
+.confession-line {
+  font-size: clamp(12.5px, 3.4vw, 14.5px);
+  line-height: 1.95;
+  letter-spacing: 0.01em;
+  color: rgba(255,255,255,0.74);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+.confession-line + .confession-line { margin-top: 2px; }
+.confession-line.show { opacity: 1; transform: translateY(0); }
+.confession-line.c-final {
+  color: var(--pink-soft);
+  margin-top: 12px;
+  text-shadow: 0 0 18px rgba(255,143,163,0.25);
+}
+
+.confession-signature {
+  margin-top: 24px;
+  text-align: center;
   font-size: 10px;
   letter-spacing: 0.2em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.3s;
-  pointer-events: auto;
-  -webkit-tap-highlight-color: transparent;
-  padding: 6px 0;
+  color: rgba(255,255,255,0.10);
+  opacity: 0;
+  transition: opacity 1.6s ease;
 }
-#re-encrypt:active { color: rgba(255,255,255,0.5); }
+.confession-signature.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -261,10 +351,10 @@ body::after {
 
 <div class="corner tl">
   <div>protocol // heart</div>
-  <div>version: 29.05</div>
-  <div>cipher: aes-256</div>
+  <div>build: 28.07.26</div>
+  <div>cipher: 04:11</div>
 </div>
-<div class="corner br">heart.protocol // ок</div>
+<div class="corner br">heart.protocol // ok</div>
 
 <div id="easter">
   <span class="star-dot">✦</span>
@@ -278,18 +368,18 @@ body::after {
   <div class="console-wrap">
 
     <div class="c-line">
-      <span class="c-tag">[sistem]</span>
+      <span class="c-tag">[system]</span>
       <span id="typer"></span><span class="cursor" id="cursor"></span>
     </div>
 
     <div class="c-line c-row" id="row-1">
-      <span class="c-tag">[download]</span>
-      <span>modulу &nbsp;<span class="c-green">✓</span></span>
+      <span class="c-tag">[loading]</span>
+      <span>module &nbsp;<span class="c-green">✓</span></span>
     </div>
 
     <div class="c-line c-row" id="row-2">
       <span class="c-tag">[search]</span>
-      <span>target: <span class="c-pink">UwU.exe</span> &nbsp;<span class="c-green">знайдено</span></span>
+      <span>target: <span class="c-pink">UwU.exe</span> &nbsp;<span class="c-green">found</span></span>
     </div>
 
     <div class="c-line c-row" id="row-3">
@@ -322,14 +412,27 @@ body::after {
 <div id="heart-view">
   <canvas id="heart-canvas"></canvas>
 
-  <div class="heart-symbol">
+  <div class="heart-symbol" id="heart-symbol">
     <div class="symbol-main">✦</div>
-    <div class="symbol-dots">
-      <div class="sdot"></div>
-      <div class="sdot"></div>
-      <div class="sdot"></div>
+
+    <!-- decrypting sequence: appears once the heart has formed, before the letter -->
+    <div class="decrypt-progress" id="decrypt-progress">
+      <p class="dp-label">Decrypting feelings...</p>
+      <p class="dp-bar" id="dp-bar">░░░░░░░░░░ 0%</p>
     </div>
-    <button id="re-encrypt">↩ re-encrypt</button>
+
+    <!-- the letter itself -->
+    <div class="confession-panel" id="confession-panel">
+      <p class="confession-line" data-i="1">Якщо ти зараз це читаєш,</p>
+      <p class="confession-line" data-i="2">значить ти дійшла до кінця.</p>
+      <p class="confession-line" data-i="3">Дякую,</p>
+      <p class="confession-line" data-i="4">що приділила цьому кілька хвилин. 🌸</p>
+      <p class="confession-line" data-i="5">Напевно,</p>
+      <p class="confession-line" data-i="6">це був найдивніший спосіб сказати одну просту річ.</p>
+      <p class="confession-line c-final" data-i="7">Ти мені дуже подобаєшся.</p>
+
+      <p class="confession-signature" id="confession-signature">28.07</p>
+    </div>
   </div>
 </div>
 
@@ -337,14 +440,20 @@ body::after {
 let stage = 'console';
 let consoleReady = false;
 
-const consoleEl  = document.getElementById('console');
-const heartView  = document.getElementById('heart-view');
-const typerEl    = document.getElementById('typer');
-const cursorEl   = document.getElementById('cursor');
-const decryptBtn = document.getElementById('decrypt-btn');
-const reEncBtn   = document.getElementById('re-encrypt');
-const hintEl     = document.getElementById('hint');
-const petalsEl   = document.getElementById('petals');
+const consoleEl    = document.getElementById('console');
+const heartView    = document.getElementById('heart-view');
+const heartSymbol  = document.getElementById('heart-symbol');
+const heartCanvasEl= document.getElementById('heart-canvas');
+const typerEl      = document.getElementById('typer');
+const cursorEl     = document.getElementById('cursor');
+const decryptBtn   = document.getElementById('decrypt-btn');
+const hintEl       = document.getElementById('hint');
+const petalsEl     = document.getElementById('petals');
+const dpBlock      = document.getElementById('decrypt-progress');
+const dpBar        = document.getElementById('dp-bar');
+const panelEl      = document.getElementById('confession-panel');
+const signatureEl  = document.getElementById('confession-signature');
+const lineEls      = Array.from(document.querySelectorAll('.confession-line'));
 
 const msg = 'Initializing...';
 let ti = 0;
@@ -372,6 +481,48 @@ function revealRows() {
   });
 }
 
+// smoothly swap the progress bar's text (brief fade, not a hard cut)
+function setBar(text, done) {
+  dpBar.style.opacity = 0;
+  setTimeout(() => {
+    dpBar.textContent = text;
+    if (done) dpBar.classList.add('done');
+    dpBar.style.opacity = 1;
+  }, 160);
+}
+
+// full cinematic sequence: heart forms -> decrypting readout -> letter -> single heart pulse -> signature
+function runSequence() {
+  // 1. let the ♡ finish forming, then bring in the ✦ anchor
+  setTimeout(() => heartSymbol.classList.add('show'), 1600);
+
+  // 2. "Decrypting feelings..." + progress
+  setTimeout(() => dpBlock.classList.add('show'), 2600);
+  setTimeout(() => setBar('██░░░░░░░ 24%'),        3300);
+  setTimeout(() => setBar('█████░░░░ 57%'),         4000);
+  setTimeout(() => setBar('██████████ 100%'),       4750);
+  setTimeout(() => setBar('Done.', true),           5450);
+
+  // 3. small pause, then dismiss the readout
+  setTimeout(() => dpBlock.classList.add('hide'),   6300);
+
+  // 4. the letter fades in, line by line
+  setTimeout(() => {
+    panelEl.classList.add('show');
+    lineEls.forEach((el, i) => {
+      setTimeout(() => {
+        el.classList.add('show');
+        if (i === lineEls.length - 1) {
+          // 5. once the last line lands, the heart quietly comes alive — once
+          setTimeout(() => heartCanvasEl.classList.add('pulse-once'), 500);
+          // 6. and finally, the signature — then nothing else happens
+          setTimeout(() => signatureEl.classList.add('show'), 1500);
+        }
+      }, 500 + i * 620);
+    });
+  }, 7000);
+}
+
 function goReveal() {
   if (stage !== 'console' || !consoleReady) return;
   stage = 'heart';
@@ -380,19 +531,11 @@ function goReveal() {
     heartView.classList.add('in');
     spawnPetals(58);
     startHeart();
+    runSequence();
   }, 500);
 }
 
-function goConsole() {
-  stage = 'console';
-  heartView.classList.remove('in');
-  stopHeart();
-  clearPetals();
-  setTimeout(() => consoleEl.classList.remove('out'), 400);
-}
-
 decryptBtn.addEventListener('click', e => { e.stopPropagation(); goReveal(); });
-reEncBtn.addEventListener('click',   e => { e.stopPropagation(); goConsole(); });
 document.addEventListener('click',   () => { if (stage === 'console') goReveal(); });
 
 function spawnPetals(n) {
@@ -427,7 +570,7 @@ function hy(t) { return -(13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - M
 
 function initPts() {
   pts = [];
-  const dpr = devicePixelRatio;
+  const dpr = Math.min(devicePixelRatio || 1, 3); // cap for very high-density displays
   const W = canvas.width / dpr;
   const H = canvas.height / dpr;
   const cx = W / 2, cy = H / 2;
@@ -450,7 +593,7 @@ function initPts() {
 }
 
 function resizeCanvas() {
-  const dpr = devicePixelRatio;
+  const dpr = Math.min(devicePixelRatio || 1, 3);
   canvas.width  = window.innerWidth  * dpr;
   canvas.height = window.innerHeight * dpr;
   ctx.setTransform(1,0,0,1,0,0);
@@ -461,7 +604,7 @@ function resizeCanvas() {
 function drawFrame(now) {
   if (!startTime) startTime = now;
   const el = now - startTime;
-  const dpr = devicePixelRatio;
+  const dpr = Math.min(devicePixelRatio || 1, 3);
   const W = canvas.width / dpr;
   const H = canvas.height / dpr;
   ctx.clearRect(0, 0, W, H);
@@ -483,11 +626,20 @@ function startHeart() {
 }
 function stopHeart() {
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-  const dpr = devicePixelRatio;
+  const dpr = Math.min(devicePixelRatio || 1, 3);
   ctx.clearRect(0, 0, canvas.width/dpr, canvas.height/dpr);
 }
 
-window.addEventListener('resize', () => { if (stage === 'heart') resizeCanvas(); });
+// debounce resize so iOS Safari's address-bar show/hide doesn't thrash the canvas
+let resizeT = null;
+window.addEventListener('resize', () => {
+  if (stage !== 'heart') return;
+  clearTimeout(resizeT);
+  resizeT = setTimeout(resizeCanvas, 120);
+});
+window.addEventListener('orientationchange', () => {
+  if (stage === 'heart') setTimeout(resizeCanvas, 200);
+});
 
 setTimeout(typeNext, 500);
 </script>
